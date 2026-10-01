@@ -13,4 +13,4 @@ export const SPELLS = [
 ];
 export const RARITIES = {Common:'#d6d4c8',Rare:'#70b9ff',Epic:'#c18bff',Legendary:'#ffc76b'};
 export function cooldownFor(spell,level,reduction){return SPELLS[spell].cooldown*Math.max(.4,1-Math.min(.45,reduction)-Math.min(.18,level*.025));}
-export function riftScale(rift){const depth=Math.max(0,rift-1);return {health:1+depth*1.2+depth*depth*.35,damage:1+depth*.3+depth*depth*.04,reward:1+depth*.25};}
+export function riftScale(rift){const depth=Math.max(0,rift-1);return {health:1+depth*1.5+depth*depth*.45,damage:1+depth*.55+depth*depth*.10,reward:1+depth*.25};}

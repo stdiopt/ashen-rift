@@ -20,7 +20,7 @@ export function configurePhysics(walls) {
 }
 function actorBody(actor) {
   if (actors.has(actor)) return actors.get(actor);
-  const radius = actor.kind === 'boss' ? 25 : actor.kind === 'brute' ? 18 : 14;
+  const radius = actor.kind === 'boss' ? 25 : ['brute','sentinel','demon'].includes(actor.kind) ? 18 : 14;
   const body = new CANNON.Body({ mass: actor.kind === 'boss' ? 6 : 1, fixedRotation: true, linearDamping: 0, collisionFilterGroup: actor.kind ? 4 : 2 });
   body.addShape(new CANNON.Sphere(radius / SCALE));
   body.position.set(actor.x / SCALE, .5, actor.y / SCALE);
@@ -63,7 +63,7 @@ export function projectileHit(x, y, nx, ny, source, projectileRadius=0) {
   // Movement bodies stay compact so doorways remain easy to traverse.
   for(const [actor] of actors){
     if(actor===source||actor.hp<=0||Boolean(actor.kind)===Boolean(source?.kind))continue;
-    const radius=(actor.kind==='boss'?42:actor.kind==='brute'?28:actor.kind?20:14)+projectileRadius;
+    const radius=(actor.kind==='boss'?42:['brute','sentinel','demon'].includes(actor.kind)?28:actor.kind?20:14)+projectileRadius;
     const ox=x-actor.x,oy=y-actor.y,c=ox*ox+oy*oy-radius*radius,b=ox*dx+oy*dy;
     const discriminant=b*b-lengthSquared*c;if(discriminant<0)continue;
     const entry=c<=0?0:(-b-Math.sqrt(discriminant))/lengthSquared;

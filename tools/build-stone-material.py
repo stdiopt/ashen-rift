@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 from scipy import ndimage
-out=Path(__file__).resolve().parents[1]/'dist/textures'
+out=Path(__file__).resolve().parents[1]/'public/textures'
 size=1024
 source=np.asarray(Image.open(sys.argv[1]).convert('L').resize((size,size)),dtype=float)/255
 # Blend paired edges before segmentation to make the outline periodic.

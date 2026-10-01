@@ -1,0 +1,25 @@
+#end .card{width:min(580px,94vw)}
+.arcade-score{font:700 36px/1.2 Arial;color:#e9c98b;margin:8px 0}
+#runstats,#score-status{font:14px/1.5 Arial;letter-spacing:0}
+#scoreform{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin:16px 0}
+#scoreform label{width:100%;font:14px Arial;color:#dcc49d}
+#score-name{width:min(220px,100%);min-height:44px;background:#0e0d15;color:#f7e8cc;border:1px solid #8b7151;border-radius:3px;padding:10px 12px;font:16px Arial;touch-action:manipulation;user-select:text}
+#scoreform button{margin:0;min-height:44px}
+.score-table{width:100%;border-collapse:collapse;font:14px/1.5 Arial;text-align:left}
+.score-table th{color:#c7ad81;font-weight:normal;border-bottom:1px solid #66513b}
+.score-table th,.score-table td{padding:7px 6px}
+.score-table td{border-bottom:1px solid #362d2c;color:#d7d0c5}
+.score-table th:nth-child(n+3),.score-table td:nth-child(n+3){text-align:right}
+.score-scroll{max-height:230px;overflow:auto;touch-action:pan-y;overscroll-behavior:contain}
+#start-leaderboard h3,#end h3{font:18px Arial;color:#e0c091;letter-spacing:2px;margin:20px 0 12px}
+#leaderboard-toggle{padding:9px 20px;font-size:14px}
+@media(max-height:500px){#end .card{padding:16px}#end .card h2{font-size:24px}.arcade-score{font-size:28px}.score-scroll{max-height:145px}}
+
+#revive-count{position:absolute;left:30px;top:92px;color:#d5b782;font:14px Arial}#death-choices button{min-height:44px}#revive:disabled{opacity:.4}#revives-status{color:#e5bf80}@media(pointer:coarse){#revive-count{left:14px;top:112px;font-size:12px}}
+
+/* Audio belongs to the start/help card, away from play controls. */
+.audio-settings{margin:12px 0;padding:10px;border:1px solid #66513b;background:#11131dcc}
+.audio-settings h3{margin:0 0 6px;font:14px Arial;color:#e0c091}
+#music-controls{display:grid;grid-template-columns:110px minmax(80px,1fr);align-items:center;gap:8px;text-align:left}
+#music-controls button{margin:0;padding:6px;background:none;border:0;color:#d5bf9c;font:13px Arial;min-height:36px;text-align:left}
+#music-controls input{width:100%;min-width:0;touch-action:pan-x;accent-color:#c6a478}

@@ -1,0 +1,1 @@
+{"name":"ashen-rift","private":true,"type":"module","scripts":{"build":"node tools/build.mjs","db:generate":"drizzle-kit generate"},"devDependencies":{"drizzle-kit":"0.31.10","drizzle-orm":"0.45.2"}}

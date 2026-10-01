@@ -1,4 +1,4 @@
-import {SPELLS,RARITIES} from './skills.js?v=38';
+import {SPELLS,RARITIES} from './skills.js?v=48';
 export const GEAR_SLOTS=['staff','offhand','robes','legs','head'];
 export const GEAR_ICONS={staff:'⚚',offhand:'◈',robes:'♜',legs:'Ⅱ',head:'♛'};
 export const GEM_QUALITIES={Common:{name:'White',power:1,color:'#e6e1d6'},Rare:{name:'Blue',power:1.3,color:'#70b9ff'},Epic:{name:'Purple',power:1.7,color:'#c18bff'},Legendary:{name:'Orange',power:2.2,color:'#ff9957'}};
@@ -35,7 +35,7 @@ export const MATERIAL_NAMES={scraps:'scraps',powder:'arcane powder'};
 export function salvageReward(item){return{material:item.type==='gem'?'powder':'scraps',amount:({Common:1,Rare:2,Epic:4,Legendary:8}[item.rarity])*(item.level||1)};}
 export function salvageItem(state,uid){
   const index=state.bag.findIndex(item=>item.uid===uid);if(index<0)return null;
-  const item=state.bag[index],gems=item.sockets?.filter(Boolean)||[];
+  const item=state.bag[index];if(item.locked)return null;const gems=item.sockets?.filter(Boolean)||[];
   if(state.bag.length-1+gems.length>state.capacity)return null;
   const reward=salvageReward(item);state.bag.splice(index,1,...gems);state[reward.material]+=reward.amount;return reward;
 }
@@ -72,7 +72,19 @@ export function sortedBagItems(state,filter='all'){
 
 export function discardItem(state,uid){
   const index=state.bag.findIndex(item=>item.uid===uid);if(index<0)return false;
+  if(state.bag[index].locked)return false;
   const gems=state.bag[index].sockets?.filter(Boolean)||[];
   if(state.bag.length-1+gems.length>state.capacity)return false;
   state.bag.splice(index,1,...gems);return true;
+}
+
+export function toggleGearLock(state,uid){const item=allItems(state).find(item=>item.uid===uid&&item.type==='gear');if(!item)return false;item.locked=!item.locked;return true;}
+export function bulkSalvagePreview(state){
+  const items=state.bag.filter(item=>item.type==='gear'&&!item.locked),gems=items.flatMap(item=>item.sockets?.filter(Boolean)||[]);
+  return{items,gems,count:items.length,scraps:items.reduce((sum,item)=>sum+salvageReward(item).amount,0),fits:state.bag.length-items.length+gems.length<=state.capacity};
+}
+export function salvageAllGear(state){
+  const preview=bulkSalvagePreview(state);if(!preview.count||!preview.fits)return null;
+  const ids=new Set(preview.items.map(item=>item.uid));state.bag=state.bag.filter(item=>!ids.has(item.uid)).concat(preview.gems);state.scraps+=preview.scraps;
+  return{count:preview.count,scraps:preview.scraps,gems:preview.gems.length};
 }

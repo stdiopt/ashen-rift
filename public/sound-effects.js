@@ -5,7 +5,7 @@ export class SoundEffects {
     const AudioContext=globalThis.AudioContext||globalThis.webkitAudioContext;if(!AudioContext)return;
     if(!this.context){this.context=new AudioContext();this.master=this.context.createGain();this.master.gain.value=this.muted?0:this.volume;this.master.connect(this.context.destination);}
     this.context.resume().catch(()=>{});
-    if(!this.loading)this.loading=Promise.all(FILES.map(async key=>{try{const response=await fetch('./audio/sfx/'+key+'.mp3?v=48');if(!response.ok)return;const buffer=await this.context.decodeAudioData(await response.arrayBuffer());this.buffers.set(key,buffer)}catch{}}));
+    if(!this.loading)this.loading=Promise.all(FILES.map(async key=>{try{const response=await fetch('./audio/sfx/'+key+'.mp3?v=49');if(!response.ok)return;const buffer=await this.context.decodeAudioData(await response.arrayBuffer());this.buffers.set(key,buffer)}catch{}}));
   }
   play(key,{gain=.7,voice=false,rate=1,duration=null,filterHz=null}={}){
     const context=this.context,buffer=this.buffers.get(key);if(!context||context.state!=='running'||!buffer||this.muted||this.active.size>=8)return false;

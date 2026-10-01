@@ -1,4 +1,4 @@
-import {SPELLS,RARITIES} from './skills.js?v=48';
+import {SPELLS,RARITIES} from './skills.js?v=49';
 export const GEAR_SLOTS=['staff','offhand','robes','legs','head'];
 export const GEAR_ICONS={staff:'⚚',offhand:'◈',robes:'♜',legs:'Ⅱ',head:'♛'};
 export const GEM_QUALITIES={Common:{name:'White',power:1,color:'#e6e1d6'},Rare:{name:'Blue',power:1.3,color:'#70b9ff'},Epic:{name:'Purple',power:1.7,color:'#c18bff'},Legendary:{name:'Orange',power:2.2,color:'#ff9957'}};

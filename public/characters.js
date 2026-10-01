@@ -1,4 +1,5 @@
 import * as THREE from './vendor/three.module.js';
+import {appendMageBody} from './sculpted-body.js?v=49';
 
 // One skinned surface per actor. Geometry and clips are cached by family;
 // skeletons and materials belong to each actor, so poses and status tints stay independent.
@@ -51,13 +52,18 @@ function template(kind){
     }
     for(let side of [-1,1]){part(new THREE.ConeGeometry(1.5,8,6),'trim','head',side*4,7,-14,1,1,1,[.3,0,side*.2]);for(let j=0;j<2;j++)sphere(1.2,'magic','head',side*(2+j*3),16,-16);}
   }else{
-  // Sculpted torso and layered collar, with blended weights through the waist.
+  if(hero)appendMageBody(buckets,regions,boneIndex);
+  // Enemies retain their existing family geometry.
+  if(!hero){
   part(new THREE.SphereGeometry(12,12,8),'cloth','chest',0,41,0,width,1.38,.65,null,'spine',y=>(50-y)/20);
+  }
   cylinder(10*width,11*width,5,'trim','pelvis',0,27,0);
   sphere(4,'trim','pelvis',0,27,-9,1,1,.45);
+  if(!hero){
   cylinder(5.5,6,7,'skin','neck',0,58,0);
   sphere(8.2,'skin','head',0,67,-1,.83,1.13,.85);
   sphere(3,'skin','head',0,65,-7,1,.6,.5);
+  }
   if(hunter){for(const side of [-1,1]){part(new THREE.ConeGeometry(3,18,6),'skin','head',side*9,71,0,1,1,.5,[0,0,-side*1.1]);for(let j=0;j<3;j++)part(new THREE.ConeGeometry(2,12,5),'trim','chest',side*(6+j*3),45+j*4,7,1,1,1,[.65,0,-side*.5]);}}
   if(kind==='ghoul'){for(const side of [-1,1])for(let j=0;j<3;j++)part(new THREE.CapsuleGeometry(1,8,2,6),'trim','chest',side*5,38+j*4,-7,1,1,1,[0,0,side*.9]);}
   // Deep hood rim with a visible face opening; eyes sit on the forward (-Z) face.
@@ -86,6 +92,7 @@ function template(kind){
   for(const side of [-1,1]){
     const suffix=side<0?'L':'R';
     sphere(1.25,'magic','head',side*3.1,68,-7.6,1,.55,.4);
+    if(!hero){
     sphere(heavy?8:5.7,heavy?'metal':'cloth','arm'+suffix,side*15,48,0,1,.8,1.1);
     cylinder(caster?5:4.4,caster?6:3.6,15,'cloth','arm'+suffix,side*14,42,0,'forearm'+suffix,y=>(38-y)/6);
     cylinder(3.4,3,13,heavy?'metal':'skin','forearm'+suffix,side*14,28,0);
@@ -93,6 +100,7 @@ function template(kind){
     cylinder(4.8,4,13,'legs','thigh'+suffix,side*7,18,0,'shin'+suffix,y=>(14-y)/7);
     cylinder(3.8,3.4,11,'boots','shin'+suffix,side*7,7,0);
     sphere(4.5,'boots','foot'+suffix,side*7,3,-3,1,.65,1.5);
+    }
     if(!caster&&!heavy){for(let i=0;i<3;i++)part(new THREE.ConeGeometry(1,10,4),'trim','hand'+suffix,side*14+(i-1)*2,17,-4,1,1,1,[Math.PI*.12,0,0]);}
   }
   if(caster){
@@ -147,6 +155,39 @@ function animationClips(bones,kind){
   }
   idle.push(new THREE.VectorKeyframeTrack('pelvis.position',[0,1.2,2.4],[0,25,0,0,25.5,0,0,25,0]));
   walk.push(new THREE.VectorKeyframeTrack('pelvis.position',[0,.2,.4,.6,.8],[0,25,0,0,26.3,0,0,25,0,0,26.3,0,0,25,0]));
+  if(kind==='hero'){
+    // A running cycle: knees flex backward during recovery, opposing arm swing,
+    // two flight phases and a forward body lean. Staff hand counters its arm.
+    walk.length=0;
+    const times=Array.from({length:9},(_,i)=>i*.1);
+    for(const bone of bones){
+      const poses=times.map(time=>{
+        const phase=time/.8*Math.PI*2,swing=Math.cos(phase),bounce=Math.sin(phase*2);
+        let pose=[0,0,0];
+        if(bone.name==='pelvis')pose=[.045,-.07*swing,.035*swing];
+        if(bone.name==='spine')pose=[.15,0,0];
+        if(bone.name==='chest')pose=[.025,.1*swing,-.025*swing];
+        if(bone.name==='neck')pose=[-.10,0,0];
+        if(bone.name==='head')pose=[-.04,-.025*swing,0];
+        if(bone.name==='cape')pose=[.30+.07*bounce,0,.04*swing];
+        for(const [suffix,offset,side] of [['L',0,1],['R',Math.PI,-1]]){
+          const stride=Math.cos(phase+offset),recovery=Math.max(0,Math.sin(phase+offset));
+          if(bone.name==='thigh'+suffix)pose=[.68*stride-.08,0,side*.035];
+          if(bone.name==='shin'+suffix)pose=[-.16-1.05*recovery,0,0];
+          if(bone.name==='foot'+suffix)pose=[.12+.24*recovery-.16*stride,0,0];
+          if(bone.name==='arm'+suffix)pose=[-.30*stride,0,side*.12];
+          if(bone.name==='forearm'+suffix)pose=[suffix==='R'?.24:.65,0,0];
+          if(bone.name==='hand'+suffix)pose=[suffix==='R'?.30*stride-.24:-.12,0,0];
+          if(bone.name==='skirt'+suffix)pose=[.25*stride-.07,0,side*.05];
+        }
+        return pose;
+      });
+      walk.push(track(bone.name,times,poses));
+    }
+    walk.push(new THREE.VectorKeyframeTrack('pelvis.position',times,times.flatMap(time=>{
+      const phase=time/.8*Math.PI*2;return[.4*Math.cos(phase),25+1.8*(1-Math.cos(phase*2)),0];
+    })));
+  }
   const magic=kind==='hero'||kind==='caster'||kind==='healer';
   const cast=new THREE.AnimationClip('attack',.55,[track('armR',[0,.15,.28,.55],[[0,0,0],[magic?.35:1.5,0,-.2],[magic?.5:1.05,0,-.5],[0,0,0]]),track('forearmR',[0,.15,.28,.55],[[0,0,0],[magic?-.2:.7,0,0],[magic?-.25:-.5,0,0],[0,0,0]]),track('armL',[0,.15,.28,.55],[[0,0,0],[magic?1.1:.2,0,.3],[magic?.75:.2,0,.4],[0,0,0]]),track('chest',[0,.15,.28,.55],[[0,0,0],[0,-.16,0],[0,.12,0],[0,0,0]])]);
   THREE.AnimationUtils.makeClipAdditive(cast,0,new THREE.AnimationClip('reference',1,reference));
@@ -170,7 +211,7 @@ export function updateRiggedCharacter(model,actor,time,dt){
   if(model.dead){model.mixer.update(dt);return;}
   const frozen=!!actor.status?.freeze;if(frozen)return;const walk=actor.moving?1:0;
   model.motion+=(walk-model.motion)*(1-Math.exp(-12*dt));model.actions.walk.setEffectiveWeight(model.motion);model.actions.idle.setEffectiveWeight(1-model.motion);
-  model.actions.walk.setEffectiveTimeScale(model.kind==='hunter'?1.4:model.kind==='brute'?.75:1);
+  model.actions.walk.setEffectiveTimeScale(model.kind==='hero'?1.25:model.kind==='hunter'?1.4:model.kind==='brute'?.75:1);
   const attack=actor.attackAnim||0;
   if(attack>model.lastAttack+.025){model.actions.attack.reset().setEffectiveWeight(1).play();}
   model.lastAttack=attack;const hit=actor.hit||0;if(hit>model.lastHit+.025)model.actions.hit.reset().setEffectiveWeight(1).play();model.lastHit=hit;const previousStepTime=model.actions.walk.time;model.mixer.update(frozen?0:dt);const stepTime=model.actions.walk.time;if(model.motion>.25&&actor.moving&&((previousStepTime<.4&&stepTime>=.4)||stepTime<previousStepTime))model.onStep?.();

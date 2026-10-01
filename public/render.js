@@ -1,7 +1,7 @@
-import { soundEffects } from './sound-effects.js?v=48';
-import { createRiggedCharacter, updateRiggedCharacter, beginCharacterDeath, applyCharacterEquipment, disposeRiggedCharacter, prepareCharacterTemplates } from './characters.js?v=48';
-import { RARITIES } from './skills.js?v=48';
-import { StableLightSelection } from './light-selection.js?v=48';
+import { soundEffects } from './sound-effects.js?v=49';
+import { createRiggedCharacter, updateRiggedCharacter, beginCharacterDeath, applyCharacterEquipment, disposeRiggedCharacter, prepareCharacterTemplates } from './characters.js?v=49';
+import { RARITIES } from './skills.js?v=49';
+import { StableLightSelection } from './light-selection.js?v=49';
 import { RoomEnvironment } from './vendor/room-environment.js';
 import * as THREE from './vendor/three.module.js';
 let renderer,scene,camera,W,H,hero,rooms,corridors,ray=new THREE.Raycaster(),ground=new THREE.Plane(new THREE.Vector3(0,1,0),0),floorTarget=new THREE.Vector3(),aimRing,mini,miniCtx,dungeonGroup,lightPool=[],floorSurface,wallSurface,woodSurface,wetSurface,wetMask,aimLine,heroLight,heroLightTarget,heroGlow,lightSelection,lastLightTime=0,spellTexture,particleCloud,cutawayScreen=new THREE.Vector3(),cutawayViewport=new THREE.Vector2(),merchantModel,shieldVisual,lootBeamTexture,merchantLabel,portalLabel,mapCanvas,mapOriginX=0,mapOriginY=0,shaderWarmup,lastShadowTime=-1;

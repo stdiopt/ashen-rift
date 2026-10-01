@@ -1,8 +1,11 @@
 // Connected branching layouts with a shared continuous floor boundary. Rendering and physics share the same boundary.
-export function generateDungeon(seed = Math.floor(Math.random() * 2147483646) + 1) {
+export function generateDungeon(seed = Math.floor(Math.random() * 2147483646) + 1, forcedBiome = null) {
   let state = seed;
   const random = () => ((state = state * 16807 % 2147483647) - 1) / 2147483646;
   const pick = values => values[Math.floor(random() * values.length)];
+  const chosenBiome=pick(['castle','jungle','hell']);
+  const biome=['castle','jungle','hell'].includes(forcedBiome)?forcedBiome:chosenBiome;
+  const biomeName={castle:'Ruined Castle',jungle:'Overgrown Jungle',hell:'Hell Gates'}[biome];
   const rooms = [], corridors = [], deco = [], tiles = [], walls = [], edges=[];
   const layout=pick(['branch','loop','winding']);
   const mirror=random()<.5?-1:1;
@@ -11,13 +14,13 @@ export function generateDungeon(seed = Math.floor(Math.random() * 2147483646) + 
     loop:[[0,160],[-540,-600],[540,-600],[0,-1400],[180,-2240]],
     winding:[[0,160],[600,-650],[-100,-1450],[-720,-2240],[0,-3060]]
   };
-  const themes=['chapel','crypt','flooded'];
-  const titles={chapel:['Broken Nave','Ruined Sanctuary','Hall of Oaths'],crypt:['Bone Vault','Forgotten Ossuary','Burial Rotunda'],flooded:['Drowned Prison','Sunken Cistern','Hall of Leaks']};
+  const themes=biome==='jungle'?['grove','marsh','temple']:biome==='hell'?['cinder','lava','gate']:['chapel','crypt','flooded'];
+  const titles={grove:['Rootbound Grove','Emerald Hollow','Thorn Sanctuary'],marsh:['Venom Fen','Sunken Grove','Mire of Whispers'],temple:['Lost Temple','Vinebound Court','Ancient Idol'],cinder:['Ashen Expanse','Cinder Vault','Scorched Hollow'],lava:['Molten Basin','Ember Chasm','Firewell'],gate:['Demon Gate','Infernal Court','Gate of Chains'],chapel:['Broken Nave','Ruined Sanctuary','Hall of Oaths'],crypt:['Bone Vault','Forgotten Ossuary','Burial Rotunda'],flooded:['Drowned Prison','Sunken Cistern','Hall of Leaks']};
   for(let i=0;i<5;i++){
     const [px,py]=layouts[layout][i];
-    const theme=themes[(i+seed)%3],shape=i===0?'rounded':pick(['rounded','ellipse','octagon']);
+    const theme=themes[(i+seed)%3],shape=i===0?'rounded':pick(biome==='jungle'?['ellipse','ellipse','rounded']:biome==='hell'?['octagon','rounded','octagon']:['rounded','ellipse','octagon']);
     const w=pick([480,560,640]),h=pick([480,560,640,720]);
-    const room={x:px*mirror+(i?(random()-.5)*80:0),y:py,w,h,theme,shape,name:i===4?'The Warden’s Throne':pick(titles[theme])};
+    const room={x:px*mirror+(i?(random()-.5)*80:0),y:py,w,h,theme,shape,name:i===4?(biome==='jungle'?'Heart of the Wild':biome==='hell'?'The Infernal Gate':'The Warden’s Throne'):pick(titles[theme])};
     rooms.push(room);
     for(let j=0;j<14;j++){
       const angle=random()*Math.PI*2,r=.32+random()*.1;
@@ -34,7 +37,7 @@ export function generateDungeon(seed = Math.floor(Math.random() * 2147483646) + 
       const t=j/count,dx=to.x-from.x,dy=to.y-from.y;
       const arc=Math.sin(t*Math.PI)*bend;
       const x=from.x+dx*t-dy/length*arc,y=from.y+dy*t+dx/length*arc;
-      const radius=90+Math.sin(t*Math.PI)*12;
+      const radius=(biome==='jungle'?105:biome==='hell'?95:90)+Math.sin(t*Math.PI)*(biome==='jungle'?25:12);
       const sample={x,y,w:radius*2,h:radius*2,radius};
       corridors.push(sample);samples.push(sample);
     }
@@ -80,5 +83,5 @@ export function generateDungeon(seed = Math.floor(Math.random() * 2147483646) + 
     const a=point(x,y),b=point(x+step,y),c=point(x+step,y+step),d=point(x,y+step);
     clip([a,b,c]);clip([a,c,d]);if(field(x+20,y+20)>=0)tiles.push({x:x+20,y:y+20});
   }
-  return { seed, layout, edges, sideRooms, rooms, corridors, tiles, triangles, walls, deco, contains:(x,y,margin=0)=>field(x,y)>=margin };
+  return { seed, biome, biomeName, layout, edges, sideRooms, rooms, corridors, tiles, triangles, walls, deco, contains:(x,y,margin=0)=>field(x,y)>=margin };
 }

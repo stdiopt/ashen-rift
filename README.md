@@ -10,6 +10,6 @@ python3 -m http.server 8000 --directory dist
 
 Open http://localhost:8000 in your browser. No npm install or build step is required.
 
-Source snapshot: game version 36.
+Source snapshot: game version 38.
 
 Vendored dependency licenses are included in `dist/vendor/`.

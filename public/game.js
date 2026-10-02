@@ -1,13 +1,14 @@
+import {setText,setHTML,setTitle,onLanguageChange} from './i18n.js?v=61';
 const mobileEffects=!!window.matchMedia?.('(pointer:coarse)').matches;
-import { soundEffects } from './sound-effects.js?v=58';
-import { music } from './music.js?v=58';
-import { beginScoreRun, endScoreRun } from './leaderboard.js?v=58';
-import { SPELLS, RARITIES, cooldownFor, riftScale } from './skills.js?v=58';
-import { toggleGearLock, bulkSalvagePreview, salvageAllGear, sortedBagItems, GEM_QUALITIES, gemPower, fusionOptions, fuseGems, GEAR_SLOTS, GEAR_ICONS, createInventory, createGear, createGem, gemAt, allItems, inventoryStats, collectItem, wearItem, socketGem, removeGem, discardItem, salvageItem, salvageReward, MATERIAL_NAMES, upgradeCost, upgradeGem, upgradeEquipment } from './inventory.js?v=58';
-import { attachTouchControls } from './touch-controls.js?v=58';
-import { generateDungeon } from './dungeon.js?v=58';
-import { configurePhysics, stepPhysics, teleportActor, projectileHit } from './physics.js?v=58';
-import { initRender, renderFrame, screenToWorld, projectWorld, resizeRender, rebuildDungeon } from './render.js?v=58';
+import { soundEffects } from './sound-effects.js?v=61';
+import { music } from './music.js?v=61';
+import { beginScoreRun, endScoreRun } from './leaderboard.js?v=61';
+import { SPELLS, RARITIES, cooldownFor, riftScale } from './skills.js?v=61';
+import { toggleGearLock, bulkSalvagePreview, salvageAllGear, sortedBagItems, GEM_QUALITIES, gemPower, fusionOptions, fuseGems, GEAR_SLOTS, GEAR_ICONS, createInventory, createGear, createGem, gemAt, allItems, inventoryStats, collectItem, wearItem, socketGem, removeGem, discardItem, salvageItem, salvageReward, MATERIAL_NAMES, upgradeCost, upgradeGem, upgradeEquipment } from './inventory.js?v=61';
+import { attachTouchControls } from './touch-controls.js?v=61';
+import { generateDungeon } from './dungeon.js?v=61';
+import { configurePhysics, stepPhysics, teleportActor, projectileHit } from './physics.js?v=61';
+import { initRender, renderFrame, screenToWorld, projectWorld, resizeRender, rebuildDungeon } from './render.js?v=61';
 'use strict';
 const canvas=document.getElementById('game'),$=id=>document.getElementById(id),TAU=Math.PI*2;
 let W=innerWidth,H=innerHeight,dpr=1,started=false,paused=false,over=false,t=0,last=0,wave=0,kills=0,spawnTimer=0,shake=0,toastTime=0;
@@ -34,17 +35,17 @@ function reset(){
 }
 function enterRift(retrying=false){
   soundEffects?.stop();moveTarget=null;rightMouseHeld=false;
-  document.body.classList.add('playing');resetTouch();if(!retrying){const choices=['castle','jungle','hell','frozen'].filter(kind=>kind!==lastRiftBiome);const biome=choices[Math.floor(Math.random()*choices.length)];lastRiftBiome=biome;dungeon=generateDungeon(undefined,biome);}music?.setTheme(dungeon.biome);$('rifttheme').textContent=dungeon.biomeName.toUpperCase();rooms=dungeon.rooms;corridors=dungeon.corridors;
+  document.body.classList.add('playing');resetTouch();if(!retrying){const choices=['castle','jungle','hell','frozen'].filter(kind=>kind!==lastRiftBiome);const biome=choices[Math.floor(Math.random()*choices.length)];lastRiftBiome=biome;dungeon=generateDungeon(undefined,biome);}music?.setTheme(dungeon.biome);setText($('rifttheme'), dungeon.biomeName.toUpperCase());rooms=dungeon.rooms;corridors=dungeon.corridors;
   configurePhysics(dungeon.walls);rebuildDungeon(dungeon);accumulator=0;teleportActor(p,0,110);p.hp=p.max;p.shield=0;p.shieldTime=0;p.hazardSlow=0;p.inv=1;
   enemies=[];drops=[];fx=[];texts=[];particles=[];cd=[0,0,0,0,0];spellCooldowns=Array(10).fill(0);wave=0;t=0;fullBagNotice=0;bossDead=false;portalGrace=0;merchantOpen=false;merchantArmed=true;
   cleared=new Set();encountered=new Set([0]);activeRoom=0;trapTimer=4;
   chests=[...rooms.slice(1,-1).map(r=>({x:r.x+r.w*.28,y:r.y+r.h*.23,opened:false})),...dungeon.sideRooms.map(r=>({x:r.x,y:r.y,opened:false}))];
-  over=false;paused=false;started=true;p.hit=0;p.attackAnim=0;p.cast=0;p.spin=0;if(retrying)p.pots=Math.max(3,p.pots);$('revive-count').textContent=revivesLeft+' revives';toast((retrying?'Revived · ':'')+'Rift '+rift+' · '+dungeon.biomeName+' · '+dungeon.layoutName);
-  for(const id of ['start','end','inventory','merchant'])$(id).classList.add('hidden');$('pause').textContent='Ⅱ';updateUI();
+  over=false;paused=false;started=true;p.hit=0;p.attackAnim=0;p.cast=0;p.spin=0;if(retrying)p.pots=Math.max(3,p.pots);setText($('revive-count'), revivesLeft+' revives');toast((retrying?'Revived · ':'')+'Rift '+rift+' · '+dungeon.biomeName+' · '+dungeon.layoutName);
+  for(const id of ['start','end','inventory','merchant'])$(id).classList.add('hidden');setText($('pause'), 'Ⅱ');updateUI();
 }
 function merchantPosition(){return{x:rooms[rooms.length-1].x+105,y:rooms[rooms.length-1].y+25};}
 function portalPosition(){return{x:rooms[rooms.length-1].x,y:rooms[rooms.length-1].y-140};}
-function toast(s){$('toast').textContent=s;toastTime=3.5;$('toast').style.opacity=1}function iso(x,y,z=0){return projectWorld(x,y,z)}function uniso(x,y){return screenToWorld(x,y)}
+function toast(s){setText($('toast'), s);toastTime=3.5;$('toast').style.opacity=1}function iso(x,y,z=0){return projectWorld(x,y,z)}function uniso(x,y){return screenToWorld(x,y)}
 function skillPoint(gesture){
   if(!gesture)return null;
   const length=Math.hypot(gesture.dx,gesture.dy),id=loadout[gesture.skill]??0,range=SPELLS[id].range*(id===3?gemPower(gemAt(pack,gesture.skill)):1);
@@ -118,7 +119,7 @@ function use(slot,gesture=null){
   if(id===5){
     const used=new Set();let from={x:p.x,y:p.y},point=target;
     for(let j=0;j<5;j++){const choices=enemies.filter(e=>e.hp>0&&!used.has(e)&&Math.hypot(e.x-point.x,e.y-point.y)<(j?180:110)).sort((a,b)=>Math.hypot(a.x-point.x,a.y-point.y)-Math.hypot(b.x-point.x,b.y-point.y));
-      const enemy=choices[0];if(!enemy)break;used.add(enemy);fx.push({type:'lightning',x:from.x,y:from.y,tx:enemy.x,ty:enemy.y,color:spell.color,life:.35,max:.35});damage(enemy,power*(2.5-j*.2));applyStatus(enemy,'stun',.65);from=enemy;point=enemy;}
+      const enemy=choices[0];if(!enemy)break;used.add(enemy);fx.push({type:'lightning',x:from.x,y:from.y,tx:enemy.x,ty:enemy.y,color:spell.color,life:.55,max:.55});spellBurst(enemy.x,enemy.y,'#bfeaff',8,100,44);damage(enemy,power*(2.5-j*.2));applyStatus(enemy,'stun',.65);from=enemy;point=enemy;}
     spellBurst(target.x,target.y,spell.color,18,80,35);
   }
   if(id===6)fx.push({type:'meteor',x:target.x,y:target.y,r:125,life:1,max:1,color:spell.color,power});
@@ -135,13 +136,13 @@ function renderShop(){renderInventory();}
 function buy(kind,uid){
   if(!merchantOpen||!bossDead)return false;
   if(kind==='inventory'){inventory();return true;}
-  if(kind==='potion'){if(p.gold<35){$('itemnotice').textContent='Not enough gold.';return false;}p.gold-=35;p.pots++;}
+  if(kind==='potion'){if(p.gold<35){setText($('itemnotice'), 'Not enough gold.');return false;}p.gold-=35;p.pots++;}
   else if(kind==='upgrade'){
     const item=allItems(pack).find(item=>item.uid===uid);if(!item)return false;
     const cost=item.type==='gem'?upgradeGem(pack,uid,p.gold):upgradeEquipment(pack,uid,p.gold);
-    if(!cost){$('itemnotice').textContent='You need gold and '+MATERIAL_NAMES[item.type==='gem'?'powder':'scraps']+' for this upgrade.';return false;}p.gold-=cost.gold;syncEquipment();
+    if(!cost){setText($('itemnotice'), 'You need gold and '+MATERIAL_NAMES[item.type==='gem'?'powder':'scraps']+' for this upgrade.');return false;}p.gold-=cost.gold;syncEquipment();
   }else return false;
-  $('itemnotice').textContent='Purchase complete.';renderShop();updateUI();return true;
+  setText($('itemnotice'), 'Purchase complete.');renderShop();updateUI();return true;
 }
 let selectedItem=null,inventoryDrag=null,inventoryTab='all',suppressInventoryClickUntil=0;
 function syncEquipment(){
@@ -159,60 +160,60 @@ function equipmentSlot(slot){
   return `<div class="gear-slot" data-gear-slot="${slot}" style="--rarity:${item.color}">${itemTile(item)}${slots.length?'<div class="weapon-sockets">'+sockets+'</div>':''}</div>`;
 }
 function renderInventory(){
-  $('inventorytitle').textContent=merchantOpen?'RIFT ENCHANTER':'INVENTORY';
+  setText($('inventorytitle'), merchantOpen?'RIFT ENCHANTER':'INVENTORY');
   $('enchanteroptions').classList.toggle('hidden',!merchantOpen);
-  $('inventorysummary').textContent=`${p.power} damage · ${p.armor} armor · ${Math.round(gear.cooldown*100)}% cooldown reduction · ${p.gold} gold · ${pack.scraps} scraps · ${pack.powder} arcane powder`;
+  setText($('inventorysummary'), `${p.power} damage · ${p.armor} armor · ${Math.round(gear.cooldown*100)}% cooldown reduction · ${p.gold} gold · ${pack.scraps} scraps · ${pack.powder} arcane powder`);
   const rows=[['Level',p.level],['Health',Math.ceil(p.hp)+' / '+p.max],['Spell power',p.power],['Armor',p.armor],['Damage reduction',Math.round((1-100/(100+p.armor*2))*100)+'%'],['Cooldown reduction',Math.round(gear.cooldown*100)+'%'],['Gold',p.gold],['Scraps',pack.scraps],['Arcane powder',pack.powder],['Healing potions',p.pots],['Rift',rift],['Experience',p.xp+' / '+p.level*90]];
-  $('character-stats-list').innerHTML=rows.map(([label,value])=>`<div><dt>${label}</dt><dd>${value}</dd></div>`).join('');
-  $('equipment').innerHTML='<div class="mage-doll"><img src="mage-paperdoll.svg" alt="Mage wearing robes and holding a staff" draggable="false"></div>'+GEAR_SLOTS.map(equipmentSlot).join('');
-  $('bagcount').textContent=`Backpack · ${pack.bag.length} / ${pack.capacity}`;
+  setHTML($('character-stats-list'), rows.map(([label,value])=>`<div><dt>${label}</dt><dd>${value}</dd></div>`).join(''));
+  setHTML($('equipment'), '<div class="mage-doll"><img src="mage-paperdoll.svg" alt="Mage wearing robes and holding a staff" draggable="false"></div>'+GEAR_SLOTS.map(equipmentSlot).join(''));
+  setText($('bagcount'), `Backpack · ${pack.bag.length} / ${pack.capacity}`);
   const visible=sortedBagItems(pack,inventoryTab);
   for(const tab of $('inventory').querySelectorAll('[data-tab]'))tab.setAttribute('aria-selected',String(tab.dataset.tab===inventoryTab));
-  $('items').innerHTML=visible.map(item=>itemTile(item)).join('')+Array.from({length:pack.capacity-visible.length},()=>'<div class="item-empty">·</div>').join('');
+  setHTML($('items'), visible.map(item=>itemTile(item)).join('')+Array.from({length:pack.capacity-visible.length},()=>'<div class="item-empty">·</div>').join(''));
   renderItemDetail();
 }
 function closeItemDetail(){selectedItem=null;$('itempopup').classList.add('hidden');}
 function renderItemDetail(){
-  $('itemnotice').textContent='';
+  setText($('itemnotice'), '');
   const item=allItems(pack).find(item=>item.uid===selectedItem),bagItem=pack.bag.includes(item);
-  if(!item){$('itempopup').classList.add('hidden');$('itemdetail').innerHTML='<p>Select loot to compare, wear or salvage. Drag gear to the matching slot or a gem to a weapon socket. You can also select an item and tap its slot. Arcane Bolt is always available.</p>';return;}
+  if(!item){$('itempopup').classList.add('hidden');setHTML($('itemdetail'), '<p>Select loot to compare, wear or salvage. Drag gear to the matching slot or a gem to a weapon socket. You can also select an item and tap its slot. Arcane Bolt is always available.</p>');return;}
   let comparison='';if(item.type==='gear'&&bagItem){const current=pack.equipped[item.slot];comparison=`<p class="comparison">Worn: ${current.name} · Lv. ${current.level}<br>${itemStats(current)}<br>${['power','armor','cooldown'].map(key=>{const diff=item.stats[key]-current.stats[key];return diff?`<span class="${diff>0?'better':'worse'}">${diff>0?'+':''}${key==='cooldown'?Math.round(diff*100)+'%':diff} ${key==='cooldown'?'cooldown reduction':key==='power'?'damage':'armor'}</span>`:'';}).filter(Boolean).join(' · ')}</p>`;}
   const wornSlot=[1,2,3].find(slot=>gemAt(pack,slot)?.uid===item.uid),socketWeapon=Object.values(pack.equipped).find(weapon=>weapon.sockets.some(gem=>gem?.uid===item.uid));
   const reward=salvageReward(item),cost=upgradeCost(item),fusion=merchantOpen&&bossDead&&bagItem&&item.type==='gem'?fusionOptions(pack,item.uid):null;$('itempopup').classList.remove('hidden');
-  $('itemdetail').innerHTML=`<h3 style="color:${item.color}">${item.icon} ${item.name} <small>${item.locked?'🔒 ':''}Lv. ${item.level}</small></h3><p>${itemStats(item)}</p>${comparison}${item.type==='gem'&&bagItem?'<h4>Choose a weapon socket</h4><div class="socket-choices">'+[1,2,3].map(slot=>{const current=gemAt(pack,slot);return `<button data-action="socket" data-index="${slot}"><b>${slot<3?'Staff '+slot:'Offhand'}</b><span>${current?'Replace '+SPELLS[current.skill].name+' · Lv. '+current.level:'Empty socket'}</span></button>`;}).join('')+'</div>':''}${fusion?`<div class="fusion-offer"><h4>Fuse ${SPELLS[item.skill].name} gems</h4><p>${fusion.recipe.count} ${GEM_QUALITIES[item.rarity].name.toLowerCase()} → 1 ${GEM_QUALITIES[fusion.recipe.next].name.toLowerCase()}<br>${fusion.matches.length} matching gems in backpack · Highest level preserved</p><button data-action="fuse" ${fusion.ready?'':'disabled'}>Fuse into ${GEM_QUALITIES[fusion.recipe.next].name} · +${Math.round((GEM_QUALITIES[fusion.recipe.next].power-1)*100)}% base spell power</button></div>`:item.type==='gem'&&item.rarity==='Legendary'?'<p class="inventory-hint">Orange: highest gem quality.</p>':''}<div class="item-actions">${merchantOpen?`<button data-action="upgrade" ${item.level>=10||p.gold<cost.gold||pack[cost.material]<cost.amount?'disabled':''}>${item.level>=10?'Maximum level':'Upgrade to level '+(item.level+1)+' · '+cost.gold+'g + '+cost.amount+' '+MATERIAL_NAMES[cost.material]}</button>`:''}${item.type==='gear'?`<button data-action="lock">${item.locked?'Unlock':'Lock'}</button>`:''}${item.type==='gear'&&bagItem?'<button data-action="wear">Wear</button>':''}${bagItem&&merchantOpen&&bossDead?`<button data-action="salvage" ${item.locked?'disabled':''}>Salvage · ${reward.amount} ${MATERIAL_NAMES[reward.material]}</button>`:''}${bagItem&&!merchantOpen?'<button data-action="discard">Discard</button>':''}${wornSlot?`<button data-action="remove" data-weapon="${socketWeapon.uid}" data-index="${wornSlot<3?wornSlot-1:0}">Unsocket</button>`:''}</div>${item.type==='gear'&&item.sockets.length?`${!bagItem?'<div class="socket-choices">'+item.sockets.map((gem,index)=>`<button data-action="choose-gem" data-index="${item.slot==='staff'?index+1:3}"><b>${item.slot==='staff'?'Staff '+(index+1):'Offhand'}</b><span>${gem?'Switch '+gem.name:'Insert a skill gem'}</span></button>`).join('')+'</div>':''}<div class="stored-sockets">${item.sockets.map((gem,index)=>gem?`<button data-action="remove" data-weapon="${item.uid}" data-index="${index}">${gem.icon} ${gem.name} Lv. ${gem.level} · Remove</button>`:'<small>◇ Empty weapon socket</small>').join('')}</div>`:''}<small>Upgrades at the enchanter · ${item.level<10?cost.gold+' gold + '+cost.amount+' '+MATERIAL_NAMES[cost.material]:'Maximum level'}</small>`;
+  setHTML($('itemdetail'), `<h3 style="color:${item.color}">${item.icon} ${item.name} <small>${item.locked?'🔒 ':''}Lv. ${item.level}</small></h3><p>${itemStats(item)}</p>${comparison}${item.type==='gem'&&bagItem?'<h4>Choose a weapon socket</h4><div class="socket-choices">'+[1,2,3].map(slot=>{const current=gemAt(pack,slot);return `<button data-action="socket" data-index="${slot}"><b>${slot<3?'Staff '+slot:'Offhand'}</b><span>${current?'Replace '+SPELLS[current.skill].name+' · Lv. '+current.level:'Empty socket'}</span></button>`;}).join('')+'</div>':''}${fusion?`<div class="fusion-offer"><h4>Fuse ${SPELLS[item.skill].name} gems</h4><p>${fusion.recipe.count} ${GEM_QUALITIES[item.rarity].name.toLowerCase()} → 1 ${GEM_QUALITIES[fusion.recipe.next].name.toLowerCase()}<br>${fusion.matches.length} matching gems in backpack · Highest level preserved</p><button data-action="fuse" ${fusion.ready?'':'disabled'}>Fuse into ${GEM_QUALITIES[fusion.recipe.next].name} · +${Math.round((GEM_QUALITIES[fusion.recipe.next].power-1)*100)}% base spell power</button></div>`:item.type==='gem'&&item.rarity==='Legendary'?'<p class="inventory-hint">Orange: highest gem quality.</p>':''}<div class="item-actions">${merchantOpen?`<button data-action="upgrade" ${item.level>=10||p.gold<cost.gold||pack[cost.material]<cost.amount?'disabled':''}>${item.level>=10?'Maximum level':'Upgrade to level '+(item.level+1)+' · '+cost.gold+'g + '+cost.amount+' '+MATERIAL_NAMES[cost.material]}</button>`:''}${item.type==='gear'?`<button data-action="lock">${item.locked?'Unlock':'Lock'}</button>`:''}${item.type==='gear'&&bagItem?'<button data-action="wear">Wear</button>':''}${bagItem&&merchantOpen&&bossDead?`<button data-action="salvage" ${item.locked?'disabled':''}>Salvage · ${reward.amount} ${MATERIAL_NAMES[reward.material]}</button>`:''}${bagItem&&!merchantOpen?'<button data-action="discard">Discard</button>':''}${wornSlot?`<button data-action="remove" data-weapon="${socketWeapon.uid}" data-index="${wornSlot<3?wornSlot-1:0}">Unsocket</button>`:''}</div>${item.type==='gear'&&item.sockets.length?`${!bagItem?'<div class="socket-choices">'+item.sockets.map((gem,index)=>`<button data-action="choose-gem" data-index="${item.slot==='staff'?index+1:3}"><b>${item.slot==='staff'?'Staff '+(index+1):'Offhand'}</b><span>${gem?'Switch '+gem.name:'Insert a skill gem'}</span></button>`).join('')+'</div>':''}<div class="stored-sockets">${item.sockets.map((gem,index)=>gem?`<button data-action="remove" data-weapon="${item.uid}" data-index="${index}">${gem.icon} ${gem.name} Lv. ${gem.level} · Remove</button>`:'<small>◇ Empty weapon socket</small>').join('')}</div>`:''}<small>Upgrades at the enchanter · ${item.level<10?cost.gold+' gold + '+cost.amount+' '+MATERIAL_NAMES[cost.material]:'Maximum level'}</small>`);
 }
 function showGemPicker(slot){
-  $('itemnotice').textContent='';
+  setText($('itemnotice'), '');
   const current=gemAt(pack,slot);$('itempopup').classList.remove('hidden');
   const gems=sortedBagItems(pack,'gem');
-  $('itemdetail').innerHTML=`<h3>${slot<3?'Staff socket '+slot:'Offhand socket'}</h3><p>${current?'Replacing '+current.name+' · Level '+current.level:'Choose a skill gem.'}</p><div class="gem-picker">${gems.map(gem=>`<button data-action="socket-item" data-weapon="${gem.uid}" data-index="${slot}"><i style="color:${SPELLS[gem.skill].color}">${gem.icon}</i><span>${gem.name}<small>Level ${gem.level} · ${gem.rarity}</small></span></button>`).join('')||'<p>No spare gems. Collect gem drops to fill this socket.</p>'}</div><p class="inventory-hint">The replaced gem returns to your backpack.</p>`;
+  setHTML($('itemdetail'), `<h3>${slot<3?'Staff socket '+slot:'Offhand socket'}</h3><p>${current?'Replacing '+current.name+' · Level '+current.level:'Choose a skill gem.'}</p><div class="gem-picker">${gems.map(gem=>`<button data-action="socket-item" data-weapon="${gem.uid}" data-index="${slot}"><i style="color:${SPELLS[gem.skill].color}">${gem.icon}</i><span>${gem.name}<small>Level ${gem.level} · ${gem.rarity}</small></span></button>`).join('')||'<p>No spare gems. Collect gem drops to fill this socket.</p>'}</div><p class="inventory-hint">The replaced gem returns to your backpack.</p>`);
 }
 function inventoryAction(kind,weapon,index){
-  if(['salvage','salvage-all','confirm-salvage-all','fuse','upgrade'].includes(kind)&&(!bossDead||!merchantOpen)){$('itemnotice').textContent='Visit the enchanter after defeating the rift boss to salvage, upgrade or fuse.';return;}
+  if(['salvage','salvage-all','confirm-salvage-all','fuse','upgrade'].includes(kind)&&(!bossDead||!merchantOpen)){setText($('itemnotice'), 'Visit the enchanter after defeating the rift boss to salvage, upgrade or fuse.');return;}
   if(['discard','confirm-discard'].includes(kind)&&merchantOpen)return;
   if(kind==='lock'){if(toggleGearLock(pack,selectedItem))renderInventory();return;}
-  if(['salvage','discard','confirm-discard'].includes(kind)&&allItems(pack).find(item=>item.uid===selectedItem)?.locked){$('itemnotice').textContent='Unlock this gear first.';return;}
+  if(['salvage','discard','confirm-discard'].includes(kind)&&allItems(pack).find(item=>item.uid===selectedItem)?.locked){setText($('itemnotice'), 'Unlock this gear first.');return;}
   if(kind==='salvage-all'){
-    const preview=bulkSalvagePreview(pack);selectedItem=null;$('itemnotice').textContent='';$('itempopup').classList.remove('hidden');
-    $('itemdetail').innerHTML=`<h3>Salvage unlocked gear?</h3><p>${preview.count} backpack items → ${preview.scraps} scraps<br>${preview.gems.length} socketed gems return to your backpack.</p><p>Worn gear, locked gear and loose skill gems are protected.</p>${!preview.fits?'<p>Make backpack room for the recovered gems first.</p>':''}<button data-action="confirm-salvage-all" ${preview.count&&preview.fits?'':'disabled'}>Confirm salvage</button><button data-action="close-detail">Cancel</button>`;
+    const preview=bulkSalvagePreview(pack);selectedItem=null;setText($('itemnotice'), '');$('itempopup').classList.remove('hidden');
+    setHTML($('itemdetail'), `<h3>Salvage unlocked gear?</h3><p>${preview.count} backpack items → ${preview.scraps} scraps<br>${preview.gems.length} socketed gems return to your backpack.</p><p>Worn gear, locked gear and loose skill gems are protected.</p>${!preview.fits?'<p>Make backpack room for the recovered gems first.</p>':''}<button data-action="confirm-salvage-all" ${preview.count&&preview.fits?'':'disabled'}>Confirm salvage</button><button data-action="close-detail">Cancel</button>`);
     return;
   }
   if(kind==='confirm-salvage-all'){
-    const result=salvageAllGear(pack);if(!result){$('itemnotice').textContent='Nothing to salvage, or not enough room for socketed gems.';return;}
+    const result=salvageAllGear(pack);if(!result){setText($('itemnotice'), 'Nothing to salvage, or not enough room for socketed gems.');return;}
     closeItemDetail();renderInventory();updateUI();toast(`Salvaged ${result.count} gear · +${result.scraps} scraps`);return;
   }
 
-  if(kind==='discard'){$('itemnotice').innerHTML='Discard permanently? No materials are awarded; socketed gems return to your backpack. <button data-action="confirm-discard">Confirm discard</button>';return;}
-  if(kind==='confirm-discard'){if(!discardItem(pack,selectedItem)){$('itemnotice').textContent='Make room to recover the socketed gems first.';return;}selectedItem=null;toast('Item discarded');}
+  if(kind==='discard'){setHTML($('itemnotice'), 'Discard permanently? No materials are awarded; socketed gems return to your backpack. <button data-action="confirm-discard">Confirm discard</button>');return;}
+  if(kind==='confirm-discard'){if(!discardItem(pack,selectedItem)){setText($('itemnotice'), 'Make room to recover the socketed gems first.');return;}selectedItem=null;toast('Item discarded');}
   if(kind==='upgrade'){buy('upgrade',selectedItem);return;}
   if(kind==='buy-potion'){buy('potion');return;}
-  if(kind==='fuse'){const gem=fuseGems(pack,selectedItem);if(!gem){$('itemnotice').textContent='Collect more gems of the same skill and quality.';return;}selectedItem=gem.uid;renderInventory();toast(gem.name+' fused');return;}
+  if(kind==='fuse'){const gem=fuseGems(pack,selectedItem);if(!gem){setText($('itemnotice'), 'Collect more gems of the same skill and quality.');return;}selectedItem=gem.uid;renderInventory();toast(gem.name+' fused');return;}
   if(kind==='close-detail'){closeItemDetail();return;}
   if(kind==='choose-gem'){showGemPicker(index);return;}
   if(kind==='socket'||kind==='socket-item'){equipSelectedGem(index,kind==='socket-item'?weapon:selectedItem);closeItemDetail();return;}
   if(kind==='wear'){if(!wearItem(pack,selectedItem))return;toast('Equipment changed. Active gems transfer to your new weapon.');}
-  if(kind==='salvage'){const result=salvageItem(pack,selectedItem);if(!result){$('itemnotice').textContent='Make backpack room to recover the socketed gems.';return;}selectedItem=null;toast('Salvaged · +'+result.amount+' '+MATERIAL_NAMES[result.material]);}
-  if(kind==='remove'&&!removeGem(pack,weapon,index)){$('itemnotice').textContent='Backpack full. Make room at the enchanter after the boss.';return;}
+  if(kind==='salvage'){const result=salvageItem(pack,selectedItem);if(!result){setText($('itemnotice'), 'Make backpack room to recover the socketed gems.');return;}selectedItem=null;toast('Salvaged · +'+result.amount+' '+MATERIAL_NAMES[result.material]);}
+  if(kind==='remove'&&!removeGem(pack,weapon,index)){setText($('itemnotice'), 'Backpack full. Make room at the enchanter after the boss.');return;}
   closeItemDetail();syncEquipment();renderInventory();updateUI();
 }
 function equipSelectedGem(slot,uid=selectedItem){if(!socketGem(pack,slot,uid))return;syncEquipment();renderInventory();updateUI();}
@@ -243,7 +244,7 @@ $('inventory').addEventListener('pointerdown',event=>{
 $('inventory').addEventListener('pointermove',event=>{
   if(!inventoryDrag||event.pointerId!==inventoryDrag.pointer)return;
   if(!inventoryDrag.ghost&&Math.hypot(event.clientX-inventoryDrag.x,event.clientY-inventoryDrag.y)>8){
-    const item=allItems(pack).find(item=>item.uid===inventoryDrag.uid),ghost=document.createElement('div');ghost.className='spell-drag-ghost';ghost.textContent=item.icon;ghost.style.color=item.type==='gem'?SPELLS[item.skill].color:item.color;document.body.append(ghost);inventoryDrag.ghost=ghost;
+    const item=allItems(pack).find(item=>item.uid===inventoryDrag.uid),ghost=document.createElement('div');ghost.className='spell-drag-ghost';setText(ghost, item.icon);ghost.style.color=item.type==='gem'?SPELLS[item.skill].color:item.color;document.body.append(ghost);inventoryDrag.ghost=ghost;
     for(const target of $('inventory').querySelectorAll('[data-gear-slot], [data-slot]')){const compatible=item.type==='gear'?target.dataset.gearSlot===item.slot:!!target.dataset.slot||['staff','offhand'].includes(target.dataset.gearSlot);target.classList.add(compatible?'drop-ready':'drop-wrong');}
   }
   if(inventoryDrag.ghost){inventoryDrag.ghost.style.left=event.clientX+'px';inventoryDrag.ghost.style.top=event.clientY+'px';}
@@ -260,8 +261,8 @@ function releaseInventoryDrag(event){
 window.addEventListener('pointerup',releaseInventoryDrag);window.addEventListener('pointercancel',releaseInventoryDrag);window.addEventListener('blur',()=>{inventoryDrag?.ghost?.remove();inventoryDrag=null;clearInventoryTargets();});
 function hurt(n){if(p.inv>0||over)return;n*=riftScale(rift).damage*(1+Math.min(.8,(p.level-1)*.04));const absorbed=Math.min(p.shield||0,n);p.shield=Math.max(0,(p.shield||0)-absorbed);n-=absorbed;if(n<=0)return;p.hp-=Math.max(1,n*100/(100+p.armor*2));p.inv=.5;p.hit=.15;soundEffects?.hurt();shake=5;texts.push({x:p.x,y:p.y,z:65,text:Math.round(n),color:'#fa7873',life:.8});if(p.hp<=0){p.hp=0;finish(false)}}function finish(win){
   over=true;keys={};mouse.down=false;moveTarget=null;rightMouseHeld=false;resetTouch();
-  $('endtitle').textContent='YOU DIED';$('endtext').textContent=`Rift ${rift} · ${kills} enemies defeated · Level ${p.level}`;
-  $('revives-status').textContent=`Revives left: ${revivesLeft}`;
+  setText($('endtitle'), 'YOU DIED');setText($('endtext'), `Rift ${rift} · ${kills} enemies defeated · Level ${p.level}`);
+  setText($('revives-status'), `Revives left: ${revivesLeft}`);
   $('death-choices').classList.remove('hidden');$('revive').disabled=revivesLeft<=0;
   $('score-section').classList.add('hidden');$('restart').classList.add('hidden');$('end').classList.remove('hidden');
   if(revivesLeft<=0)endExpedition();
@@ -269,7 +270,7 @@ function hurt(n){if(p.inv>0||over)return;n*=riftScale(rift).damage*(1+Math.min(.
 function endExpedition(){
   if(!over||runEnded)return;runEnded=true;
   $('death-choices').classList.add('hidden');$('score-section').classList.remove('hidden');$('restart').classList.remove('hidden');
-  $('revives-status').textContent=revivesLeft?'Expedition ended.':'No revives remaining. Expedition ended.';
+  setText($('revives-status'), revivesLeft?'Expedition ended.':'No revives remaining. Expedition ended.');
   endScoreRun({rifts:rift-1,kills,level:p.level,seconds:Math.floor(expeditionSeconds)});
 }
 function revive(){
@@ -277,16 +278,16 @@ function revive(){
   enterRift(true);
 }
 
-function updateUI(){const boss=enemies.find(e=>e.kind==='boss'&&e.hp>0);$('bosshealth').classList.toggle('hidden',!boss);if(boss){$('bossfill').style.width=Math.max(0,boss.hp/boss.max*100)+'%';$('bosshp').textContent=Math.ceil(boss.hp)+' / '+Math.ceil(boss.max);}$('health').textContent=Math.ceil(p.hp);$('level').textContent='LV. '+p.level;$('power').textContent=p.power;$('gold').textContent=p.gold;$('xp').style.width=(p.xp/(p.level*90)*100)+'%';$('potions').textContent='Heal · '+p.pots;$('quest').textContent=activeRoom>=0?(activeRoom===0?'Leave the entrance when ready':cleared.has(activeRoom)?'Explore the remaining chambers':rooms[activeRoom].name):'Explore the sanctum';$('progress').textContent=`Rift ${rift} · ${dungeon.biomeName} · ${cleared.size} / ${rooms.length-1} chambers · ${enemies.filter(e=>e.hp>0).length} guardians`;if(bossDead)$('quest').textContent='Enchanter nearby · Enter portal for Rift '+(rift+1);document.querySelectorAll('.skill').forEach((b,i)=>{const empty=i>0&&i<4&&loadout[i]===null;b.classList.toggle('cooldown',cd[i]>0||empty);b.setAttribute('aria-disabled',String(cd[i]>0||empty));b.querySelector('i').style.opacity=(cd[i]>0||empty)?.4:1;b.querySelector('em').textContent=cd[i]>0?cd[i].toFixed(1):['LMB / SPACE','1','2','3','R'][i];if(i<4){const spell=SPELLS[loadout[i]];b.querySelector('i').textContent=spell?.icon??'◇';b.querySelector('span').textContent=spell?.short??'Socket';b.title=spell?spell.name+' · '+spell.description:'Empty weapon socket · Equip a skill gem in inventory';}})}
+function updateUI(){const boss=enemies.find(e=>e.kind==='boss'&&e.hp>0);$('bosshealth').classList.toggle('hidden',!boss);if(boss){$('bossfill').style.width=Math.max(0,boss.hp/boss.max*100)+'%';setText($('bosshp'), Math.ceil(boss.hp)+' / '+Math.ceil(boss.max));}setText($('health'), Math.ceil(p.hp));setText($('level'), 'LV. '+p.level);setText($('power'), p.power);setText($('gold'), p.gold);$('xp').style.width=(p.xp/(p.level*90)*100)+'%';setText($('potions'), 'Heal · '+p.pots);setText($('quest'), activeRoom>=0?(activeRoom===0?'Leave the entrance when ready':cleared.has(activeRoom)?'Explore the remaining chambers':rooms[activeRoom].name):'Explore the sanctum');setText($('progress'), `Rift ${rift} · ${dungeon.biomeName} · ${cleared.size} / ${rooms.length-1} chambers · ${enemies.filter(e=>e.hp>0).length} guardians`);if(bossDead)setText($('quest'), 'Enchanter nearby · Enter portal for Rift '+(rift+1));document.querySelectorAll('.skill').forEach((b,i)=>{const empty=i>0&&i<4&&loadout[i]===null;b.classList.toggle('cooldown',cd[i]>0||empty);b.setAttribute('aria-disabled',String(cd[i]>0||empty));b.querySelector('i').style.opacity=(cd[i]>0||empty)?.4:1;setText(b.querySelector('em'), cd[i]>0?cd[i].toFixed(1):['LMB / SPACE','1','2','3','R'][i]);if(i<4){const spell=SPELLS[loadout[i]];setText(b.querySelector('i'), spell?.icon??'◇');setText(b.querySelector('span'), spell?.short??'Socket');setTitle(b, spell?spell.name+' · '+spell.description:'Empty weapon socket · Equip a skill gem in inventory');}})}
 function setInventoryStats(show){
-  closeItemDetail();$('inventory').classList.toggle('stats-view',show);$('character-stats').classList.toggle('hidden',!show);$('inventory-view').textContent=show?'Equipment':'Stats';$('inventory-view').setAttribute('aria-pressed',String(show));
+  closeItemDetail();$('inventory').classList.toggle('stats-view',show);$('character-stats').classList.toggle('hidden',!show);setText($('inventory-view'), show?'Equipment':'Stats');$('inventory-view').setAttribute('aria-pressed',String(show));
 }
 $('inventory-view').onclick=()=>{setInventoryStats(!$('inventory').classList.contains('stats-view'));renderInventory()};
 function inventory(){if(!started||over)return;moveTarget=null;rightMouseHeld=false;if(merchantOpen){merchantOpen=false;$('merchant').classList.add('hidden');}const open=$('inventory').classList.contains('hidden');$('inventory').classList.toggle('hidden',!open);paused=open;resetTouch();inventoryDrag?.ghost?.remove();inventoryDrag=null;clearInventoryTargets();closeItemDetail();if(open){setInventoryStats(false);renderInventory();}}
-function togglePause(){moveTarget=null;rightMouseHeld=false;if(!started||over||!$('inventory').classList.contains('hidden'))return;paused=!paused;$('pause').textContent=paused?'▶':'Ⅱ';toast(paused?'Paused · Press Esc to resume':'Back to battle')}
+function togglePause(){moveTarget=null;rightMouseHeld=false;if(!started||over||!$('inventory').classList.contains('hidden'))return;paused=!paused;setText($('pause'), paused?'▶':'Ⅱ');toast(paused?'Paused · Press Esc to resume':'Back to battle')}
 addEventListener('keydown',e=>{if(e.target?.closest?.('input,textarea,select,[contenteditable]'))return;let k=e.key.toLowerCase();if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();keys[k]=true;if(e.repeat)return;if(k==='1')use(1);if(k==='2')use(2);if(k==='3')use(3);if(k===' ')use(0);if(k==='r')use(4);if(k==='i')inventory();if(k==='f')merchant();if(k==='escape'&&!$('itempopup').classList.contains('hidden')){closeItemDetail();return;}if(k==='escape'&&merchantOpen){$('closemerchant').onclick();return;}if(k==='escape'){$('inventory').classList.contains('hidden')?togglePause():inventory()}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);addEventListener('blur',()=>{keys={};mouse.down=false;rightMouseHeld=false;if(started&&!over&&!paused)togglePause()});canvas.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;inputMode='mouse';mouse.x=e.clientX;mouse.y=e.clientY});canvas.addEventListener('mousedown',e=>{if(e.sourceCapabilities?.firesTouchEvents)return;inputMode='mouse';mouse.x=e.clientX;mouse.y=e.clientY;if(e.button===2){rightMouseHeld=true;if(started&&!paused&&!over){const target=uniso(e.clientX,e.clientY);if(onFloor(target.x,target.y)){moveTarget={x:target.x,y:target.y,lastX:p.x,lastY:p.y,stuck:0};fx.push({type:'ring',x:target.x,y:target.y,r:18,life:.6,max:.6,color:'#cfddac'});}}return;}if(e.button!==0)return;mouse.down=true;use(0)});window.addEventListener('mouseup',e=>{if(e.button===0)mouse.down=false;if(e.button===2)rightMouseHeld=false;});canvas.addEventListener('pointercancel',e=>{if(e.pointerType!=='touch')mouse.down=false});window.addEventListener('pointercancel',()=>{rightMouseHeld=false;moveTarget=null;});canvas.oncontextmenu=e=>e.preventDefault();function requestLandscape(){if(!window.matchMedia?.('(pointer:coarse)').matches)return;const enter=document.documentElement.requestFullscreen;if(!enter)return;try{Promise.resolve(enter.call(document.documentElement,{navigationUI:'hide'})).then(()=>screen.orientation?.lock?.('landscape')).catch(()=>{})}catch{}}
 function beginGame(){soundEffects?.unlock();music?.unlock();requestLandscape();reset()}
-$('closemerchant').onclick=()=>{merchantOpen=false;paused=false;closeItemDetail();$('merchant').classList.add('hidden');$('inventory').classList.add('hidden');};$('merchant').addEventListener('click',event=>{const button=event.target.closest('[data-buy]');if(button)buy(button.dataset.buy,button.dataset.uid);});$('begin').onclick=beginGame;$('restart').onclick=beginGame;$('revive').onclick=revive;$('end-run').onclick=endExpedition;$('allowPortrait').onclick=()=>document.body.classList.add('portrait-allowed');$('bag').onclick=inventory;$('closebag').onclick=inventory;$('pause').onclick=togglePause;$('help').onclick=()=>{paused=true;$('start').classList.remove('hidden');$('begin').textContent='Resume journey';$('begin').onclick=()=>{soundEffects?.unlock();music?.unlock();requestLandscape();if(over||!started)reset();else{paused=false;$('start').classList.add('hidden')}}};const resetTouch=attachTouchControls({canvas,joystick:$('joystick'),buttons:document.querySelectorAll('.skill'),setMove:(x,y)=>{stick={x,y}},setMode:mode=>inputMode=mode,setAim:(x,y)=>{if(x===null){touchAimPoint=null;return}touchAimPoint={x,y};mouse.x=x;mouse.y=y;},cast:use,setPrimary:(value,gesture)=>{touchPrimary=value;primaryGesture=gesture},setSkillAim:gesture=>skillGesture=gesture});let padLast=[];
+$('closemerchant').onclick=()=>{merchantOpen=false;paused=false;closeItemDetail();$('merchant').classList.add('hidden');$('inventory').classList.add('hidden');};$('merchant').addEventListener('click',event=>{const button=event.target.closest('[data-buy]');if(button)buy(button.dataset.buy,button.dataset.uid);});$('begin').onclick=beginGame;$('restart').onclick=beginGame;$('revive').onclick=revive;$('end-run').onclick=endExpedition;$('allowPortrait').onclick=()=>document.body.classList.add('portrait-allowed');$('bag').onclick=inventory;$('closebag').onclick=inventory;$('pause').onclick=togglePause;$('help').onclick=()=>{paused=true;$('start').classList.remove('hidden');setText($('begin'), 'Resume journey');$('begin').onclick=()=>{soundEffects?.unlock();music?.unlock();requestLandscape();if(over||!started)reset();else{paused=false;$('start').classList.add('hidden')}}};const resetTouch=attachTouchControls({canvas,joystick:$('joystick'),buttons:document.querySelectorAll('.skill'),setMove:(x,y)=>{stick={x,y}},setMode:mode=>inputMode=mode,setAim:(x,y)=>{if(x===null){touchAimPoint=null;return}touchAimPoint={x,y};mouse.x=x;mouse.y=y;},cast:use,setPrimary:(value,gesture)=>{touchPrimary=value;primaryGesture=gesture},setSkillAim:gesture=>skillGesture=gesture});let padLast=[];
 function update(dt){expeditionSeconds+=dt;t+=dt;p.hazardSlow=Math.max(0,(p.hazardSlow||0)-dt);p.moving=false;p.hit=Math.max(0,(p.hit||0)-dt);p.attackAnim=Math.max(0,(p.attackAnim||0)-dt);p.spin=Math.max(0,(p.spin||0)-dt);p.cast=Math.max(0,(p.cast||0)-dt);p.inv=Math.max(0,p.inv-dt);spellCooldowns=spellCooldowns.map(v=>Math.max(0,v-dt));cd=loadout.map(id=>id===null?0:spellCooldowns[id]).concat(Math.max(0,cd[4]-dt));let sx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),sy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);sx+=stick.x;sy+=stick.y;let gp=navigator.getGamepads?.();let pad=gp&&Array.from(gp).find(Boolean);if(pad){if(pad.buttons.some(b=>b.pressed)||pad.axes.some(a=>Math.abs(a)>.2))inputMode='gamepad';if(Math.hypot(pad.axes[2]||0,pad.axes[3]||0)>.2)padAimAngle=Math.atan2(-pad.axes[2]*.609+pad.axes[3]*.793,pad.axes[2]*.793+pad.axes[3]*.609);sx+=Math.abs(pad.axes[0])>.15?pad.axes[0]:0;sy+=Math.abs(pad.axes[1])>.15?pad.axes[1]:0;[0,1,2,3,4].forEach((s,i)=>{let idx=[0,2,3,1,4][i];if(pad.buttons[idx]?.pressed&&(!padLast[idx]||i===0))use(s)});padLast=pad.buttons.map(b=>b.pressed)}if(Math.hypot(sx,sy)>.05){moveTarget=null;rightMouseHeld=false;}
 if(rightMouseHeld&&inputMode==='mouse'){const target=uniso(mouse.x,mouse.y);if(onFloor(target.x,target.y)){if(moveTarget){moveTarget.x=target.x;moveTarget.y=target.y;}else moveTarget={x:target.x,y:target.y,lastX:p.x,lastY:p.y,stuck:0};}}
 if(moveTarget){const dx=moveTarget.x-p.x,dy=moveTarget.y-p.y,distance=Math.hypot(dx,dy);moveTarget.stuck=Math.hypot(p.x-moveTarget.lastX,p.y-moveTarget.lastY)<.2?moveTarget.stuck+dt:0;moveTarget.lastX=p.x;moveTarget.lastY=p.y;if(distance<5||moveTarget.stuck>.65)moveTarget=null;else{const scale=Math.min(1,distance/(190*dt))/distance;sx=(dx*.793-dy*.609)*scale;sy=(dx*.609+dy*.793)*scale;}}
@@ -364,3 +365,5 @@ function draw(){for(const a of [p,...enemies]){a.renderX=(a.prevX??a.x)+(a.x-(a.
 p={x:0,y:110,hp:100,max:100,walk:0,inv:0};
 function loop(now){let dt=Math.min((now-last)/1000,.1);last=now;music?.update(dt);if(paused||over||!started)soundEffects?.walk(false);drawDt=paused?0:dt;if(started&&!paused&&!over){accumulator+=dt;while(accumulator>=1/60&&!paused&&!over){update(1/60);accumulator-=1/60}}else accumulator=0;if(paused||over)accumulator=0;renderAlpha=accumulator/(1/60);draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
 if(document.modelContext?.registerTool){try{Promise.resolve(document.modelContext.registerTool({name:'read_rift_status',description:'Read the current Ashen Rift game status.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({started,paused,over,wave,rift,bossDead,equippedSkills:loadout.filter(id=>id!==null).map(id=>SPELLS[id].name),inventoryItems:pack?.bag.length??0,health:p.hp,level:p.level||1,enemies:enemies.length,kills})})).catch(()=>{})}catch{}}
+
+onLanguageChange(()=>{if(started){updateUI();if(!$('inventory').classList.contains('hidden'))renderInventory();}});

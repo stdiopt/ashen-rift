@@ -1,8 +1,9 @@
-import { createGroundShadows } from './ground-shadows.js?v=58';
-import { soundEffects } from './sound-effects.js?v=58';
-import { createRiggedCharacter, updateRiggedCharacter, beginCharacterDeath, applyCharacterEquipment, disposeRiggedCharacter, prepareCharacterTemplates } from './characters.js?v=58';
-import { RARITIES } from './skills.js?v=58';
-import { StableLightSelection } from './light-selection.js?v=58';
+import {t,onLanguageChange} from './i18n.js?v=61';
+import { createGroundShadows } from './ground-shadows.js?v=61';
+import { soundEffects } from './sound-effects.js?v=61';
+import { createRiggedCharacter, updateRiggedCharacter, beginCharacterDeath, applyCharacterEquipment, disposeRiggedCharacter, prepareCharacterTemplates } from './characters.js?v=61';
+import { RARITIES } from './skills.js?v=61';
+import { StableLightSelection } from './light-selection.js?v=61';
 import { RoomEnvironment } from './vendor/room-environment.js';
 import * as THREE from './vendor/three.module.js';
 let mobileShadows=false,groundShadows;
@@ -208,7 +209,7 @@ function textTexture(text,color,size,background){
   const key=JSON.stringify([String(text),color,size,background]);if(textTextures.has(key))return textTextures.get(key);
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),lines=String(text).split('\n'),font=size*2;
   ctx.font='bold '+font+'px Arial';canvas.width=Math.min(900,Math.max(50,...lines.map(line=>Math.ceil(ctx.measureText(line).width+24))));canvas.height=lines.length*(font+8)+12;
-  if(background){ctx.fillStyle=background==='loot'?'rgba(13,14,24,0.18)':'rgba(13,14,24,0.88)';ctx.fillRect(0,0,canvas.width,canvas.height);if(background!=='loot'){ctx.strokeStyle=color;ctx.lineWidth=2;ctx.strokeRect(1,1,canvas.width-2,canvas.height-2);}}
+  if(background){ctx.fillStyle=background==='loot'?'rgba(13,14,24,0.10)':'rgba(13,14,24,0.88)';ctx.fillRect(0,0,canvas.width,canvas.height);if(background!=='loot'){ctx.strokeStyle=color;ctx.lineWidth=2;ctx.strokeRect(1,1,canvas.width-2,canvas.height-2);}}
   ctx.textAlign='center';ctx.font='bold '+font+'px Arial';ctx.fillStyle=color;ctx.strokeStyle='#090910';ctx.lineWidth=4;ctx.lineJoin='round';
   lines.forEach((line,i)=>{const y=font+4+i*(font+8);ctx.strokeText(line,canvas.width/2,y,canvas.width-16);ctx.fillText(line,canvas.width/2,y,canvas.width-16);});
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.generateMipmaps=false;texture.minFilter=THREE.LinearFilter;
@@ -217,6 +218,7 @@ function textTexture(text,color,size,background){
   return entry;
 }
 function updateWorldText(label,text,color=label.userData.textColor){
+  label.userData.sourceText=text;text=t(text);
   const key=JSON.stringify([String(text),color,label.userData.textSize,label.userData.textBackground]);if(label.userData.textEntry?.key===key)return;
   if(label.userData.textEntry)label.userData.textEntry.refs--;
   const entry=textTexture(text,color,label.userData.textSize,label.userData.textBackground);entry.refs++;label.userData.textEntry=entry;label.userData.textColor=color;label.material.map=entry.texture;label.material.needsUpdate=true;
@@ -270,8 +272,17 @@ function makeSpellEffect(f){
     return group;
   }
   if(f.type==='lightning'){
-    const points=[];for(let i=0;i<=8;i++){let fraction=i/8;points.push(new THREE.Vector3((f.tx-f.x)*fraction+(i&&i<8?Math.sin(i*7)*12:0),35+Math.sin(i)*5,(f.ty-f.y)*fraction));}
-    return new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:f.color,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+    const group=new THREE.Group(),dx=f.tx-f.x,dz=f.ty-f.y,length=Math.hypot(dx,dz),steps=Math.max(4,Math.min(14,Math.ceil(length/24))),points=[];
+    // A real tube stays thick on WebGL/mobile, where line widths are usually one pixel.
+    for(let i=0;i<=steps;i++){const fraction=i/steps,jag=i&&i<steps?Math.sin(i*13.7+dx*.07+dz*.03)*Math.min(17,length*.12):0;
+      points.push(new THREE.Vector3(dx*fraction-dz/Math.max(1,length)*jag,44+Math.sin(i*4.1)*jag*.3,dz*fraction+dx/Math.max(1,length)*jag));}
+    class BoltPath extends THREE.Curve{getPoint(t,target=new THREE.Vector3()){const scaled=Math.min(steps,t*steps),index=Math.min(steps-1,Math.floor(scaled));return target.copy(points[index]).lerp(points[index+1],scaled-index);}}
+    const path=new BoltPath();
+    for(const [radius,color,opacity]of [[6.5,'#779cff',.32],[2.5,'#f0faff',1]]){
+      const arc=new THREE.Mesh(new THREE.TubeGeometry(path,steps*2,radius,4,false),new THREE.MeshBasicMaterial({color,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));arc.userData.opacity=opacity;group.add(arc);
+    }
+    spellGlow(group,'#b6dfff',78,.85,dx,44,dz);spellGlow(group,'#ffffff',27,1,dx,44,dz);
+    return group;
   }
   if(f.type==='meteor'){
     const group=new THREE.Group();group.add(ring(f.color,f.r));const rock=mesh(new THREE.DodecahedronGeometry(24),new THREE.MeshBasicMaterial({color:'#ffbd70',toneMapped:false}),group);group.userData.rock=rock;spellGlow(group,f.color,100,.8,0,40,0);return group;
@@ -331,7 +342,7 @@ syncCollection(effectModels,s.fx,makeSpellEffect,(o,f)=>{
   if(f.type==='slash')o.rotation.z=-f.angle-.4;
   if(!['danger','zone','meteor','lightning'].includes(f.type)&&!projectile)o.scale.setScalar(.3+(1-a)*.7);if(f.type==='meteor')o.userData.rock.position.y=20+a*400;if(f.type==='zone')o.rotation.y=age*.2;
   if(projectile){o.rotation.y=-Math.atan2(f.vy,f.vx);o.scale.setScalar(1+Math.sin(s.t*22)*.06);}
-  o.traverse(n=>{if(n.material){n.material.opacity=f.type==='danger'?(n.geometry?.type==='CircleGeometry'?(f.trigger?.7:.12+(1-a)*.3):.8):Math.min(1,a*2)*(n.userData.opacity??1);if(n.isSprite)n.material.rotation=age*(f.type==='fireball'?2.5:-2);}});
+  o.traverse(n=>{if(n.material){n.material.opacity=f.type==='danger'?(n.geometry?.type==='CircleGeometry'?(f.trigger?.7:.12+(1-a)*.3):.8):Math.min(1,a*2)*(n.userData.opacity??1)*(f.type==='lightning'?.82+.18*Math.sin(age*75)**2:1);if(n.isSprite)n.material.rotation=age*(f.type==='fireball'?2.5:-2);}});
 });
 updateParticles(s.particles);
 
@@ -343,4 +354,6 @@ syncCollection(statusLabels,s.enemies.filter(e=>e.elite||Object.keys(e.status||{
 syncCollection(chestModels,s.chests,()=>{let group=new THREE.Group();mesh(new THREE.BoxGeometry(42,27,30),woodSurface,group,0,13.5,0);const iron=mat('#a88a54',.8,.32);for(let side of [-1,1]){mesh(new THREE.BoxGeometry(4,29,32),iron,group,side*14,14,0);for(let z of [-16,16])for(let y of [6,21])mesh(new THREE.SphereGeometry(1.5,6,4),iron,group,side*14,y,z)}let pivot=new THREE.Group();pivot.position.set(0,27,15);group.add(pivot);mesh(new THREE.BoxGeometry(44,9,32),woodSurface,pivot,0,4,-15);for(let side of [-1,1])mesh(new THREE.BoxGeometry(4,10,34),iron,pivot,side*14,4,-15);mesh(new THREE.BoxGeometry(7,10,3),iron,group,0,20,-17);let handle=mesh(new THREE.TorusGeometry(3,1,4,10),iron,group,0,17,-19);group.userData.lid=pivot;return group},(o,ch)=>{o.position.set(ch.x,0,ch.y);o.userData.lid.rotation.x=ch.opened?1.2:0});
 aimRing.userData.fill.material.opacity=mobile?.22:.13;aimRing.visible=s.started&&!s.paused&&!s.over&&s.showAim;aimRing.position.set(s.aim.x,2,s.aim.y);let radius=s.previewRadius??145;aimRing.scale.setScalar(radius/145);aimLine.visible=aimRing.visible;let vertices=aimLine.geometry.attributes.position;vertices.setXYZ(0,p.renderX??p.x,4,p.renderY??p.y);vertices.setXYZ(1,s.aim.x,4,s.aim.y);vertices.needsUpdate=true;aimLine.geometry.computeBoundingSphere();scene.userData.portal.visible=!!s.bossDead;scene.userData.portal.rotation.z=Math.sin(s.t*.4)*.05;merchantModel.visible=!!s.merchant;if(s.merchant)merchantModel.position.set(s.merchant.x,0,s.merchant.y);merchantLabel.visible=portalLabel.visible=!!s.bossDead;if(s.bossDead){placeWorldText(merchantLabel,s.merchant.x,s.merchant.y,95);updateWorldText(portalLabel,'Enter Rift '+(s.rift+1));placeWorldText(portalLabel,rooms[rooms.length-1].x,rooms[rooms.length-1].y-140,170);}
 syncCollection(floating,s.texts,a=>worldText(a.text,a.color,20),(label,a)=>{placeWorldText(label,a.x,a.y,a.z);label.material.opacity=Math.min(1,a.life*2);});
-let c=miniCtx;c.clearRect(0,0,240,160);c.fillStyle='#10121be8';c.fillRect(0,0,240,160);c.strokeStyle='#8c7652';c.strokeRect(.5,.5,239,159);const mapScale=.18;function mp(x,y){const dx=x-p.x,dz=y-p.y,basis=camera.matrixWorld.elements;return{x:120+(dx*basis[0]+dz*basis[2])*mapScale,y:73-(dx*basis[4]+dz*basis[6])*mapScale}}c.save();c.beginPath();c.rect(4,4,232,137);c.clip();const basis=camera.matrixWorld.elements,origin=mp(mapOriginX,mapOriginY);c.save();c.transform(basis[0],-basis[4],basis[2],-basis[6],origin.x,origin.y);c.drawImage(mapCanvas,0,0);c.restore();for(const e of s.enemies){let m=mp(e.x,e.y);c.fillStyle=e.kind==='boss'?'#ffbc65':'#df6573';c.fillRect(m.x-2,m.y-2,4,4)}for(const chest of s.chests)if(!chest.opened){let m=mp(chest.x,chest.y);c.fillStyle='#b99762';c.fillRect(m.x-2,m.y-2,4,4)}c.fillStyle='#f1d394';c.beginPath();c.arc(120,73,4,0,Math.PI*2);c.fill();c.strokeStyle='#e6c88e';c.beginPath();c.moveTo(120,73);const facing=mp(p.x+Math.cos(p.face||0)*72,p.y+Math.sin(p.face||0)*72);c.lineTo(facing.x,facing.y);c.stroke();c.restore();c.fillStyle='#cfb889';c.font='12px Arial';c.textAlign='center';c.fillText((scene.userData.biomeName||'SANCTUM').toUpperCase(),120,153);renderer.render(scene,camera)}
+let c=miniCtx;c.clearRect(0,0,240,160);c.fillStyle='#10121be8';c.fillRect(0,0,240,160);c.strokeStyle='#8c7652';c.strokeRect(.5,.5,239,159);const mapScale=.18;function mp(x,y){const dx=x-p.x,dz=y-p.y,basis=camera.matrixWorld.elements;return{x:120+(dx*basis[0]+dz*basis[2])*mapScale,y:73-(dx*basis[4]+dz*basis[6])*mapScale}}c.save();c.beginPath();c.rect(4,4,232,137);c.clip();const basis=camera.matrixWorld.elements,origin=mp(mapOriginX,mapOriginY);c.save();c.transform(basis[0],-basis[4],basis[2],-basis[6],origin.x,origin.y);c.drawImage(mapCanvas,0,0);c.restore();for(const e of s.enemies){let m=mp(e.x,e.y);c.fillStyle=e.kind==='boss'?'#ffbc65':'#df6573';c.fillRect(m.x-2,m.y-2,4,4)}for(const chest of s.chests)if(!chest.opened){let m=mp(chest.x,chest.y);c.fillStyle='#b99762';c.fillRect(m.x-2,m.y-2,4,4)}c.fillStyle='#f1d394';c.beginPath();c.arc(120,73,4,0,Math.PI*2);c.fill();c.strokeStyle='#e6c88e';c.beginPath();c.moveTo(120,73);const facing=mp(p.x+Math.cos(p.face||0)*72,p.y+Math.sin(p.face||0)*72);c.lineTo(facing.x,facing.y);c.stroke();c.restore();c.fillStyle='#cfb889';c.font='12px Arial';c.textAlign='center';c.fillText(t((scene.userData.biomeName||'SANCTUM').toUpperCase()),120,153);renderer.render(scene,camera)}
+
+onLanguageChange(()=>{scene?.traverse(object=>{if(object.userData.sourceText!==undefined)updateWorldText(object,object.userData.sourceText);});});

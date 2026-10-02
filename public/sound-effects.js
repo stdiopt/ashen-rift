@@ -1,3 +1,4 @@
+import {t,setText,setHTML,setTitle,onLanguageChange} from './i18n.js?v=61';
 const FILES=['grass','stone','heal','fire-cast','explosion','hurt-1','hurt-2','hurt-3','hurt-4','death-1','death-2','death-3','death-4','chest','arcane-1','arcane-2','arcane-3','arcane-4'];
 export class SoundEffects {
   constructor(){this.context=null;this.buffers=new Map();this.volume=.55;this.muted=false;this.walker=null;this.walkSurface=null;this.voiceUntil=0;this.lastExplosion=-10;this.lastDeath=-10;this.deathVariant=0;this.arcaneVariant=0;this.active=new Set();this.wantWalking=false;this.surface='stone';this.loading=null;this.lastStep=-10;try{const preference=JSON.parse(localStorage.getItem('ashen-rift-effects'));if(preference){this.volume=Math.max(0,Math.min(1,Number(preference.volume)||0));this.muted=!!preference.muted}}catch{}}
@@ -5,7 +6,7 @@ export class SoundEffects {
     const AudioContext=globalThis.AudioContext||globalThis.webkitAudioContext;if(!AudioContext)return;
     if(!this.context){this.context=new AudioContext();this.master=this.context.createGain();this.master.gain.value=this.muted?0:this.volume;this.master.connect(this.context.destination);}
     this.context.resume().catch(()=>{});
-    if(!this.loading)this.loading=Promise.all(FILES.map(async key=>{try{const response=await fetch('./audio/sfx/'+key+'.mp3?v=58');if(!response.ok)return;const buffer=await this.context.decodeAudioData(await response.arrayBuffer());this.buffers.set(key,buffer)}catch{}}));
+    if(!this.loading)this.loading=Promise.all(FILES.map(async key=>{try{const response=await fetch('./audio/sfx/'+key+'.mp3?v=61');if(!response.ok)return;const buffer=await this.context.decodeAudioData(await response.arrayBuffer());this.buffers.set(key,buffer)}catch{}}));
   }
   play(key,{gain=.7,voice=false,rate=1,duration=null,filterHz=null}={}){
     const context=this.context,buffer=this.buffers.get(key);if(!context||context.state!=='running'||!buffer||this.muted||this.active.size>=8)return false;
@@ -43,7 +44,7 @@ export class SoundEffects {
 export const soundEffects=typeof document==='undefined'?null:new SoundEffects();
 if(soundEffects){
   const button=document.getElementById('effects-toggle'),volume=document.getElementById('effects-volume');
-  const sync=()=>{button.textContent=soundEffects.muted?'Effects off':'Effects on';button.setAttribute('aria-pressed',String(!soundEffects.muted));volume.value=String(Math.round(soundEffects.volume*100));};
-  button.onclick=()=>{soundEffects.toggle();sync()};volume.oninput=()=>{soundEffects.setVolume(Number(volume.value)/100);soundEffects.unlock();};sync();
+  const sync=()=>{setText(button, soundEffects.muted?'Effects off':'Effects on');button.setAttribute('aria-pressed',String(!soundEffects.muted));volume.value=String(Math.round(soundEffects.volume*100));};
+  button.onclick=()=>{soundEffects.toggle();sync()};volume.oninput=()=>{soundEffects.setVolume(Number(volume.value)/100);soundEffects.unlock();};sync();onLanguageChange(sync);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)soundEffects.stop()});window.addEventListener('pagehide',()=>soundEffects.stop());
 }

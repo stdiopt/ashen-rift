@@ -9,7 +9,7 @@ export class RiftMusic {
   }
   async play(){const generation=++this.playGeneration;try{await this.player.play();if(generation===this.playGeneration){this.blocked=false;this.onChange?.()}}catch(error){if(generation!==this.playGeneration||error.name==='AbortError')return;this.blocked=true;this.onChange?.()}}
   loadTrack(){
-    this.playGeneration++;this.player.pause();this.player.src='./audio/'+THEME_TRACKS[this.theme]+'?v=49';this.player.load();this.player.currentTime=0;this.player.volume=0;this.loadedTheme=this.theme;this.fade={phase:'in',elapsed:0};
+    this.playGeneration++;this.player.pause();this.player.src='./audio/'+THEME_TRACKS[this.theme]+'?v=58';this.player.load();this.player.currentTime=0;this.player.volume=0;this.loadedTheme=this.theme;this.fade={phase:'in',elapsed:0};
     if(this.unlocked&&!this.hidden)this.play();this.onChange?.();
   }
   unlock(){this.unlocked=true;if(!this.theme||this.hidden)return;if(this.loadedTheme!==this.theme)this.loadTrack();else this.play();}

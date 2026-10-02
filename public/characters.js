@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {appendMageBody} from './sculpted-body.js?v=49';
+import {appendMageBody} from './sculpted-body.js?v=58';
 
 // One skinned surface per actor. Geometry and clips are cached by family;
 // skeletons and materials belong to each actor, so poses and status tints stay independent.

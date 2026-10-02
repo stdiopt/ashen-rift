@@ -23,3 +23,20 @@
 #music-controls{display:grid;grid-template-columns:110px minmax(80px,1fr);align-items:center;gap:8px;text-align:left}
 #music-controls button{margin:0;padding:6px;background:none;border:0;color:#d5bf9c;font:13px Arial;min-height:36px;text-align:left}
 #music-controls input{width:100%;min-width:0;touch-action:pan-x;accent-color:#c6a478}
+
+@media(pointer:coarse){
+ #hud header{display:none}
+ .bottom .orb{left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top))}
+ #revive-count{left:max(10px,env(safe-area-inset-left));top:74px;font-size:10px}
+ #minimap{right:env(safe-area-inset-right,0px)!important;top:env(safe-area-inset-top,0px)!important}
+ .objective{top:max(5px,env(safe-area-inset-top));left:50%;right:auto;transform:translateX(-50%);width:38vw}
+ .objective b{display:none}
+ .objective span{font:9px/1.2 Arial;color:#c6c0bc;opacity:.85}
+ .actions{left:max(78px,calc(env(safe-area-inset-left) + 68px));right:auto;top:max(12px,env(safe-area-inset-top));gap:4px}
+ .actions button{padding:6px 8px;min-width:30px;min-height:32px}
+ .toast{top:35px;font-size:11px}
+}
+@media(pointer:coarse) and (orientation:portrait){
+ .objective{top:96px;width:75vw}
+ .toast{top:118px;width:70vw}
+}
